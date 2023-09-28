@@ -3,12 +3,14 @@ import 'package:onfly_app/features/list_expenses/business/entities/expense_entit
 
 import '../../../../core/error/failure.dart';
 import '../../business/repository/expense_repository.dart';
+import '../data_sources/local/onfly_db_expenses.dart';
 import '../data_sources/remote/onfly_api_service.dart';
 
 class ExpenseRepositoryImpl implements ExpenseRepository {
-  final OnflyApiService _onflyApiService;
+  final IOnflyApiService _onflyApiService;
+  final IOnflyDBService _onflyDBService;
 
-  ExpenseRepositoryImpl(this._onflyApiService);
+  ExpenseRepositoryImpl(this._onflyApiService, this._onflyDBService);
 
   @override
   Future<List<ExpenseEntity>?> getAllExpenses() async {
@@ -30,9 +32,9 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
       }).toList();
 
       return expenseEntities;
-    } on DioException {
-      // TODO Recuperar expenses localmente
-      throw Failure(message: 'Não foi possível carregar os dados');
+    } catch (e) {
+      getExpensesLocaly();
+      throw Failure(message: 'Não foi possível carregar os dados da web');
     }
   }
 
@@ -53,9 +55,9 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
         updated: createdExpense?.updated,
         persisted: true,
       );
-    } on DioException {
-      // TODO Criar expense localmente
-      throw Failure(message: 'Não foi possível persistir o dado');
+    } catch (e) {
+      saveExpenseLocaly(expenseEntity);
+      throw Failure(message: 'Não foi possível persistir o dado na web');
     }
   }
 
@@ -71,8 +73,14 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   @override
   Future<ExpenseEntity?> updateExpense(ExpenseEntity expenseEntity) async {
     try {
-      final updatedExpense =
-          await _onflyApiService.updateExpense(expenseEntity);
+      final body = ExpenseEntity(
+          description: expenseEntity.description,
+          expenseDate: expenseEntity.expenseDate,
+          amount: expenseEntity.amount,
+          latitude: expenseEntity.latitude,
+          longitude: expenseEntity.longitude,
+          id: expenseEntity.id);
+      final updatedExpense = await _onflyApiService.updateExpense(body);
       return ExpenseEntity(
         description: updatedExpense?.description,
         expenseDate: updatedExpense?.expenseDate,
@@ -86,20 +94,31 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   }
 
   @override
-  Future<List<ExpenseEntity>> getExpensesLocaly() {
-    // TODO: implement getSavedExpenses
-    throw UnimplementedError();
+  Future<List<ExpenseEntity>> getExpensesLocaly() async {
+    try {
+      final listExpenses = _onflyDBService.getExpensesLocaly();
+      return listExpenses;
+    } on DioException {
+      throw Failure(message: 'Não foi possível persistir o dado');
+    }
   }
 
   @override
-  Future<void> removeExpenseLocaly(String id) {
-    // TODO: implement removeExpense
-    throw UnimplementedError();
+  Future<void> removeExpenseLocaly(String id) async {
+    try {
+      await _onflyDBService.removeExpenseLocaly(id);
+    } on DioException {
+      throw Failure(message: 'Não foi possível persistir o dado');
+    }
   }
 
   @override
-  Future<void> saveExpenseLocaly(ExpenseEntity expense) {
-    // TODO: implement saveExpense
-    throw UnimplementedError();
+  Future<ExpenseEntity> saveExpenseLocaly(ExpenseEntity expense) {
+    try {
+      final createdExpense = _onflyDBService.saveExpenseLocaly(expense);
+      return createdExpense;
+    } on DioException {
+      throw Failure(message: 'Não foi possível persistir o dado');
+    }
   }
 }

@@ -7,6 +7,7 @@ import 'features/list_expenses/presentation/pages/list_expenses/list_expense.dar
 import 'injection_container.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await HiveConfig.start();
 
   dependencyManagement();

@@ -26,15 +26,13 @@ class OnflyApiService implements IOnflyApiService {
   @override
   Future<ExpenseEntity>? createExpense(ExpenseEntity expense) async {
     try {
-      final response = await dio.post(
+      Response<dynamic> response = await dio.post<Map<String, dynamic>>(
         '/collections/expense_B7fAae/records',
-        data: {
-          'body': expense.toJson(),
-        },
+        data: expense.toJson(),
       );
 
-      return response.data;
-    } catch (e) {
+      return ExpenseEntity.fromJson(response.data);
+    } on Exception {
       throw Failure(message: 'Não foi possível carregar os dados');
     }
   }
@@ -44,7 +42,7 @@ class OnflyApiService implements IOnflyApiService {
     try {
       final response = await dio.get('/collections/expense_B7fAae/records');
       return Expense.fromJson(response.data);
-    } on DioException {
+    } on Exception {
       throw Failure(message: 'Não foi possível carregar os dados');
     }
   }
@@ -52,15 +50,13 @@ class OnflyApiService implements IOnflyApiService {
   @override
   Future<ExpenseEntity>? updateExpense(ExpenseEntity expense) async {
     try {
-      final response = await dio.put(
-        '/collections/expense_B7fAae/records',
-        data: {
-          'body': expense.toJson(),
-        },
+      Response<dynamic> response = await dio.patch<Map<String, dynamic>>(
+        '/collections/expense_B7fAae/records/${expense.id}',
+        data: expense.toJson(),
       );
 
-      return response.data;
-    } on DioException {
+      return ExpenseEntity.fromJson(response.data);
+    } on Exception {
       throw Failure(message: 'Não foi possível carregar os dados');
     }
   }
@@ -69,7 +65,7 @@ class OnflyApiService implements IOnflyApiService {
   Future<void> deleteExpense(String id) async {
     try {
       await dio.delete('/collections/expense_B7fAae/records/$id');
-    } on DioException {
+    } on Exception {
       throw Failure(message: 'Não foi possível carregar os dados');
     }
   }

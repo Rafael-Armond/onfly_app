@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
+import 'package:onfly_app/features/list_expenses/business/entities/expense_entity.dart';
 
 import '../controllers/remote/remote_expenses_controller.dart';
 import 'custom_button.dart';
@@ -9,22 +9,13 @@ import 'custom_button.dart';
 class ListExpenseItem extends StatefulWidget {
   const ListExpenseItem({
     super.key,
-    required this.title,
-    required this.description,
-    required this.expenseDate,
-    required this.amount,
+    required this.expenseEntity,
     required this.persisted,
     required this.index,
-    required this.id,
   });
-
-  final String title;
-  final String description;
-  final String expenseDate;
-  final double amount;
+  final ExpenseEntity expenseEntity;
   final bool persisted;
   final int index;
-  final String id;
 
   @override
   State<ListExpenseItem> createState() => _ListExpenseItemState();
@@ -38,26 +29,12 @@ class _ListExpenseItemState extends State<ListExpenseItem> {
     symbol: 'R\$',
   );
 
-  final RemoteExpensesController _remoteExpensesController =
-      GetIt.instance<RemoteExpensesController>();
+  final _remoteExpensesController = Get.find<RemoteExpensesController>();
 
   void toggleExpanded() {
     setState(() {
       isExpanded = !isExpanded;
     });
-  }
-
-  String getFormatedDate(String dateString) {
-    try {
-      DateTime dateTime = DateTime.parse(dateString);
-      String formattedDate = "${dateTime.day.toString().padLeft(2, '0')}/"
-          "${dateTime.month.toString().padLeft(2, '0')}/"
-          "${dateTime.year}";
-
-      return formattedDate;
-    } catch (e) {
-      return 'Invalid Date';
-    }
   }
 
   @override
@@ -80,12 +57,16 @@ class _ListExpenseItemState extends State<ListExpenseItem> {
                     children: [
                       ListTile(
                         title: Text(
-                          widget.title,
+                          widget.expenseEntity.collectionName ??
+                              widget.expenseEntity.description!,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        subtitle: Text(getFormatedDate(widget.expenseDate)),
+                        subtitle: Text(
+                          _remoteExpensesController.getFormatedDate(
+                              widget.expenseEntity.expenseDate!),
+                        ),
                       ),
                     ],
                   ),
@@ -98,15 +79,15 @@ class _ListExpenseItemState extends State<ListExpenseItem> {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          //mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              brCurrencyFormat.format(widget.amount),
+                              brCurrencyFormat
+                                  .format(widget.expenseEntity.amount),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            widget.persisted
+                            widget.expenseEntity.persisted!
                                 ? const Icon(Icons.cloud)
                                 : const Icon(Icons.cloud_off),
                           ],
@@ -157,14 +138,13 @@ class _ListExpenseItemState extends State<ListExpenseItem> {
                     child: CustomButton(
                       text: 'Editar',
                       color: Colors.lightGreen,
-                      callback: () =>
-                          Get.toNamed('/addUpdateExpense', parameters: {
-                        "addExpenseMode": "false",
-                        "description": widget.description,
-                        "expenseDate": widget.expenseDate,
-                        "amount": widget.amount.toString(),
-                        "idExpense": widget.id,
-                      }),
+                      callback: () => Get.toNamed(
+                        '/addUpdateExpense',
+                        arguments: {
+                          "addExpenseMode": false,
+                          "expenseEntity": widget.expenseEntity,
+                        },
+                      ),
                     ),
                   ),
                   const Expanded(
@@ -176,8 +156,8 @@ class _ListExpenseItemState extends State<ListExpenseItem> {
                     child: CustomButton(
                       text: 'Deletar',
                       color: Colors.red,
-                      callback: () =>
-                          _remoteExpensesController.deleteExpense(widget.id),
+                      callback: () => _remoteExpensesController
+                          .deleteExpense(widget.expenseEntity.id!),
                     ),
                   ),
                 ],

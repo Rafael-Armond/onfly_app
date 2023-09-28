@@ -61,7 +61,7 @@ class Items {
       this.updated});
 
   Items.fromJson(Map<String, dynamic> json) {
-    amount = json['amount'];
+    amount = double.tryParse(json['amount'].toString());
     collectionId = json['collectionId'];
     collectionName = json['collectionName'];
     created = json['created'];
@@ -74,7 +74,7 @@ class Items {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['amount'] = amount;
     data['collectionId'] = collectionId;
     data['collectionName'] = collectionName;
