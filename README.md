@@ -1,16 +1,35 @@
-# onfly_app
+# Expense Manager
 
-A new Flutter project.
+## Project Description
+This project was created as part of the technical test for the Onfly company. The project focuses on expense management, allowing users to create, read, update, and delete expenses via API. Additionally, the project provides the ability to create and retrieve expenses locally when the device is offline or the API is unavailable. Local expenses are synchronized with the web when the device regains internet connectivity.
 
-## Getting Started
+## Installation and Setup Instructions
+To run this Flutter application, follow these instructions:
 
-This project is a starting point for a Flutter application.
+1. Make sure you have Flutter installed. If not, you can [install Flutter](https://flutter.dev/docs/get-started/install) from the official website.
 
-A few resources to get you started if this is your first Flutter project:
+2. Clone this repository to your local machine using the following command:
+git clone https://github.com/Rafael-Armond/onfly_app.git
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+3. Navigate to the project directory:
+cd onfly_app
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+4. Install dependencies using Flutter's package manager:
+flutter pub get
+
+5. Run the application on your preferred device (emulator or physical device):
+flutter run
+
+6. The app should launch on your device.
+
+## Technologies and Packages Used
+- **Architecture:** Clean Architecture
+- **State Management:** GetX
+- **Local Data Management:** Hive
+- **HTTP Requests:** Dio
+- **Connectivity Management:** Connectivity Plus
+- **Data Formatting:** Intl
+
+## Contributors
+- [Rafael Armond](https://github.com/Rafael-Armond/)
+
