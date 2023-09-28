@@ -7,8 +7,8 @@ abstract class ExpenseRepository {
   Future<ExpenseEntity?> updateExpense(ExpenseEntity expenseEntity);
   Future<void> deleteExpense(String id);
 
-  // Database methods
+  // Local database methods
   Future<List<ExpenseEntity>> getExpensesLocaly();
-  Future<void> saveExpenseLocaly(ExpenseEntity expense);
-  Future<void> removeExpenseLocaly(String id);
+  Future<ExpenseEntity> saveExpenseLocaly(ExpenseEntity expense);
+  Future<void> removeExpenseLocaly(String description);
 }

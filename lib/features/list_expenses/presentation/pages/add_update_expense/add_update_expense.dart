@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_it/get_it.dart';
+import 'package:intl/intl.dart';
+import 'package:onfly_app/features/list_expenses/business/entities/expense_entity.dart';
 import 'package:onfly_app/features/list_expenses/presentation/widgets/custom_button.dart';
 
 import '../../controllers/remote/remote_expenses_controller.dart';
@@ -9,20 +10,36 @@ class AddUpdateExpense extends StatelessWidget {
   AddUpdateExpense({
     super.key,
     required this.addExpenseMode,
-    this.description,
-    this.expenseDate,
-    this.amount,
-    this.idExpense,
+    required this.expenseEntity,
   });
 
   final bool addExpenseMode;
-  final String? description;
-  final String? expenseDate;
-  final String? amount;
-  final String? idExpense;
+  final ExpenseEntity expenseEntity;
+  final DateTime selectedDate = DateTime.now();
+  final brCurrencyFormat = NumberFormat.currency(
+    locale: 'pt_BR',
+    symbol: 'R\$',
+  );
 
-  final RemoteExpensesController _remoteExpensesController =
-      GetIt.instance<RemoteExpensesController>();
+  final _remoteExpensesController = Get.find<RemoteExpensesController>();
+  final TextEditingController _textEditingControllerDate =
+      TextEditingController();
+  final TextEditingController _textEditingControllerAmount =
+      TextEditingController();
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != selectedDate) {
+      expenseEntity.expenseDate =
+          _remoteExpensesController.getFormatedDate(picked.toString());
+      _textEditingControllerDate.text = expenseEntity.expenseDate!;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,26 +63,50 @@ class AddUpdateExpense extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const TextField(
+                TextFormField(
+                  initialValue: expenseEntity.description,
                   decoration: InputDecoration(
-                    labelText: "Description",
+                    hintText: !addExpenseMode
+                        ? expenseEntity.description
+                        : "Expense description",
                   ),
                   keyboardType: TextInputType.text,
+                  onChanged: (text) => expenseEntity.description = text,
                 ),
-                const TextField(
+                TextFormField(
+                  controller: _textEditingControllerDate,
                   decoration: InputDecoration(
-                    labelText: "Expense Date",
-                    suffixIcon: Icon(
-                      Icons.calendar_today_outlined,
+                    hintText: !addExpenseMode
+                        ? _remoteExpensesController
+                            .getFormatedDate(expenseEntity.expenseDate!)
+                        : "Expense date",
+                    suffixIcon: GestureDetector(
+                      onTap: () => _selectDate(context),
+                      child: const Icon(
+                        Icons.calendar_today_outlined,
+                      ),
                     ),
                   ),
                   keyboardType: TextInputType.datetime,
+                  readOnly: true,
+                  onChanged: (text) => expenseEntity.expenseDate = text,
                 ),
-                const TextField(
+                TextFormField(
+                  controller: _textEditingControllerAmount,
                   decoration: InputDecoration(
-                    labelText: "Amount",
+                    hintText: !addExpenseMode
+                        ? brCurrencyFormat.format(
+                            double.parse(expenseEntity.amount.toString()))
+                        : "Expense amount",
                   ),
                   keyboardType: TextInputType.number,
+                  onEditingComplete: () {
+                    _textEditingControllerAmount.text = brCurrencyFormat.format(
+                        double.parse(_textEditingControllerAmount.text));
+                    FocusScope.of(context).unfocus();
+                  },
+                  onChanged: (text) =>
+                      expenseEntity.amount = double.parse(text),
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
@@ -81,30 +122,40 @@ class AddUpdateExpense extends StatelessWidget {
                   children: [
                     Expanded(
                       child: CustomButton(
-                        text: "Adicionar",
+                        text: addExpenseMode ? "Adicionar" : "Editar",
                         color: Colors.blue,
                         callback: () async {
                           if (addExpenseMode) {
-                            if (await _remoteExpensesController
-                                .createExpense()) {
-                              Get.snackbar(
-                                "Successfully created expense",
-                                "Your expense has been created successfully",
-                                backgroundColor: Colors.lightBlue,
-                                icon: const Icon(Icons.check),
-                              );
-                              Get.toNamed('/');
+                            if (_remoteExpensesController
+                                .checkSubmitAddExpenseForm(expenseEntity)) {
+                              if (await _remoteExpensesController
+                                  .createExpense(expenseEntity)) {
+                                Get.snackbar(
+                                  "Successfully created expense",
+                                  "Your expense has been created successfully",
+                                  backgroundColor: Colors.lightBlue,
+                                  icon: const Icon(Icons.check),
+                                );
+                                Get.toNamed('/');
+                              } else {
+                                Get.snackbar(
+                                  "Error when creating expense",
+                                  "Unable to register expense",
+                                  backgroundColor: Colors.red,
+                                  icon: const Icon(Icons.error),
+                                );
+                              }
                             } else {
                               Get.snackbar(
                                 "Error when creating expense",
-                                "Unable to register expense",
+                                "Fill all the fields to continue",
                                 backgroundColor: Colors.red,
                                 icon: const Icon(Icons.error),
                               );
                             }
                           } else {
                             if (await _remoteExpensesController
-                                .updateExpense(idExpense!)) {
+                                .updateExpense(expenseEntity)) {
                               Get.snackbar(
                                 "Successfully updated expense",
                                 "Your expense has been updated successfully",
